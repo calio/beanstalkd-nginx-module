@@ -2,13 +2,13 @@
 
 # this file is mostly meant to be used by the author himself.
 
-ragel -I src -G2 src/ngx_http_memc_response.rl
-
-if [ $? != 0 ]; then
-    echo 'Failed to generate the memcached response parser.' 1>&2
-    exit 1;
-fi
-
+#ragel -I src -G2 src/ngx_http_beanstalkd_response.rl
+#
+#if [ $? != 0 ]; then
+#    echo 'Failed to generate the memcached response parser.' 1>&2
+#    exit 1;
+#fi
+#
 root=`pwd`
 #cd ~/work
 version=$1
@@ -55,9 +55,9 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
             --without-http_userid_module \
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
-          --add-module=$root/../eval-nginx-module \
+#          --add-module=$root/../eval-nginx-module \
           --add-module=$root/../echo-nginx-module \
-          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93
+#          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93
           #--with-debug
           #--add-module=$home/work/nginx/nginx_upstream_hash-0.3 \
   #--without-http_ssi_module  # we cannot disable ssi because echo_location_async depends on it (i dunno why?!)

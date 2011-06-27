@@ -30,28 +30,16 @@ __DATA__
 --- response_body_like: 500 Internal Server Error
 --- error_code: 500
 
-=== TEST 2: empty query
+
+
+=== TEST 2: simple put query
 --- config
     location /foo {
-        beanstalkd_literal_raw_query "";
-        beanstalkd_pass 127.0.0.1:$TEST_NGINX_REDIS_PORT;
-    }
---- request
-    GET /foo
---- response_body_like: 500 Internal Server Error
---- error_code: 500
---- SKIP
-
-
-
-=== TEST 3: simple put query
---- config
-    location /foo {
-        beanstalkd_query put one first;
-        beanstalkd_pass 127.0.0.1:$TEST_NGINX_REDIS_PORT;
+        beanstalkd_query put 1 1 1 $job;
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 --- request
     GET /foo
 --- response_body eval
 "INSERTED 1\r\n"
-
+--- ONLY
