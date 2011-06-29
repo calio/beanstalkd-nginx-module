@@ -9,6 +9,11 @@
 #include <nginx.h>
 
 
+typedef enum {
+    ngx_http_beanstalkd_cmd_put;
+    ngx_http_beanstalkd_cmd_unknown;
+} ngx_http_beanstalkd_cmd_t;
+
 typedef struct {
     ngx_http_upstream_conf_t     upstream;
     ngx_http_complex_value_t    *complex_target; /* for beanstalkd_pass */
@@ -582,5 +587,83 @@ ngx_int_t
 ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
         ngx_array_t *queries, ngx_buf_t **b)
 {
+    ngx_http_beanstalkd_loc_conf_t  *blcf;
+    ngx_array_t                     *cmds;
+    size_t                           len;
+
+    blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
+
+    cmds = ngx_http_beanstalkd_parse_cmds(r, queries);
+    if (cmd == NULL) {
+        ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+                "beanstalkd: beanstalkd parse command error");
+
+        return NGX_ERROR;
+    }
+
+    /* calculate the length of bufer needed to store the request commands */
+
+    *b = ngx_create_temp_buf(r->pool, len);
+    /* fill the buffer with each command */
+
     return NGX_OK;
+}
+
+ngx_array_t *
+ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
+        *queries)
+{
+    ngx_int_t                    n, i, j;
+    ngx_array_t                 *cmds, *query;
+    ngx_http_complex_value_t    *query_cmd;
+    ngx_str_t                   query_cmd_str;
+    ngx_http_beanstalkd_cmd_t   *cmd;
+
+    n = queries->args->nelts;
+
+    cmds = ngx_array_create(r->pool, n, sizeof(ngx_http_beanstalkd_cmd_t));
+    if (cmds == NULL) {
+            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+                "beanstalkd: can't create cmds array, ngx_array_create failed");
+
+        return NULL;
+    }
+
+    for (i = 0; i < n; i++) {
+        query = queries->args->elts[i];
+
+        query_cmd = query->args->elts[1];
+
+        cmd = ngx_array_push(cmds);
+        if (cmd == NULL) {
+            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+                "beanstalkd: can't push from cmd array, ngx_array_push failed");
+
+        if (ngx_http_complex_value(r, query_cmd, &query_cmd_str) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+                "beanstalkd: can't get complex value, ngx_http_complex_value failed");
+            return NULL;
+        }
+
+        *cmd = ngx_http_beanstalkd_parse_cmd(query_cmd_str);
+    }
+
+    return cmds;
+}
+
+ngx_http_beanstalkd_cmd_t *
+ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd);
+{
+    switch (cmd.len) {
+        case 3:
+            if (ngx_strncmp(cmd.data, "put", 3) == 0) {
+                return ngx_http_beanstalkd_cmd_put;
+            } else {
+                return ngx_http_beanstalkd_cmd_unknown;
+            }
+            break;
+        default:
+            return ngx_http_beanstalkd_cmd_unknown;
+    }
+
 }

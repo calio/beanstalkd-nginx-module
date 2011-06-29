@@ -29,7 +29,6 @@ __DATA__
     GET /foo
 --- response_body_like: 500 Internal Server Error
 --- error_code: 500
---- ONLY
 
 
 
@@ -43,3 +42,4 @@ __DATA__
     GET /foo
 --- response_body eval
 "INSERTED 1\r\n"
+--- ONLY
