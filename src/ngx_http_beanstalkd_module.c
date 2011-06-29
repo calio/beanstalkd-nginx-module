@@ -11,8 +11,15 @@
 
 typedef struct {
     ngx_http_upstream_conf_t     upstream;
+    ngx_http_complex_value_t    *complex_target; /* for beanstalkd_pass */
+    ngx_array_t                 *queries;
 } ngx_http_beanstalkd_loc_conf_t;
 
+typedef struct {
+    ngx_uint_t           query_count;
+    ngx_http_request_t  *request;
+    ngx_int_t            state;
+} ngx_http_beanstalkd_ctx_t;
 
 static void *ngx_http_beanstalkd_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_beanstalkd_merge_loc_conf(ngx_conf_t *cf, void *parent,
@@ -23,10 +30,12 @@ static char *ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd,
 static char *ngx_http_beanstalkd_query(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 ngx_int_t ngx_http_beanstalkd_handler(ngx_http_request_t *r);
-static ngx_int_t ngx_http_beanstalkd_add_variable(ngx_conf_t *cf,
-        ngx_str_t *name);
-static ngx_int_t ngx_http_beanstalkd_variable_not_found(ngx_http_request_t *r,
-    ngx_http_variable_value_t *v, uintptr_t data);
+//static ngx_int_t ngx_http_beanstalkd_add_variable(ngx_conf_t *cf,
+//        ngx_str_t *name);
+//static ngx_int_t ngx_http_beanstalkd_variable_not_found(ngx_http_request_t *r,
+//    ngx_http_variable_value_t *v, uintptr_t data);
+ngx_http_upstream_srv_conf_t *ngx_http_beanstalkd_upstream_add(
+        ngx_http_request_t *r, ngx_url_t *url);
 
 static ngx_int_t ngx_http_beanstalkd_create_request(ngx_http_request_t *r);
 static ngx_int_t ngx_http_beanstalkd_reinit_request(ngx_http_request_t *r);
@@ -37,12 +46,13 @@ static void ngx_http_beanstalkd_abort_request(ngx_http_request_t *r);
 static void ngx_http_beanstalkd_finalize_request(ngx_http_request_t *r,
     ngx_int_t rc);
 
+ngx_int_t ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
+        ngx_array_t *queries, ngx_buf_t **b);
 
-static ngx_flag_t ngx_http_beanstalkd_enabled = 0;
-static ngx_int_t  ngx_http_beanstalkd_cmd_index;
+static ngx_flag_t ngx_http_beanstalkd_enabled = 0; //static ngx_int_t  ngx_http_beanstalkd_cmd_index;
 
 
-static ngx_str_t  ngx_http_beanstalkd_cmd = ngx_string("beanstalkd_cmd");
+//static ngx_str_t  ngx_http_beanstalkd_cmd = ngx_string("beanstalkd_cmd");
 
 
 static ngx_command_t  ngx_http_beanstalkd_commands[] = {
@@ -198,28 +208,15 @@ ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_beanstalkd_loc_conf_t  *blcf = conf;
 
-    ngx_str_t                 *value;
-    ngx_url_t                  u;
-    ngx_http_core_loc_conf_t  *clcf;
+    ngx_str_t                   *value;
+    ngx_http_core_loc_conf_t    *clcf;
+    ngx_uint_t                   n;
+    ngx_url_t                    url;
+
+    ngx_http_compile_complex_value_t    ccv;
 
     if (blcf->upstream.upstream) {
         return "is duplicate";
-    }
-
-    ngx_http_beanstalkd_enabled = 1;
-
-    value = cf->args->elts;
-
-    dd("cf->args->elts[1]:%.*s", (int)value->len, value->data);
-
-    ngx_memzero(&u, sizeof(ngx_url_t));
-
-    u.url = value[1];
-    u.no_resolve = 1;
-
-    blcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
-    if (blcf->upstream.upstream == NULL) {
-        return NGX_CONF_ERROR;
     }
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
@@ -230,8 +227,45 @@ ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         clcf->auto_redirect = 1;
     }
 
-    return NGX_CONF_OK;
+    ngx_http_beanstalkd_enabled = 1;
 
+    value = cf->args->elts;
+
+    n = ngx_http_script_variables_count(&value[1]);
+    if (n) {
+        blcf->complex_target = ngx_palloc(cf->pool,
+                sizeof(ngx_http_complex_value_t));
+
+        if (blcf->complex_target == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+        ccv.cf = cf;
+        ccv.value = &value[1];
+        ccv.complex_value = blcf->complex_target;
+
+        if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+
+        return NGX_CONF_OK;
+    }
+
+    blcf->complex_target = NULL;
+
+    ngx_memzero(&url, sizeof(ngx_url_t));
+
+    url.url = value[1];
+    url.no_resolve = 1;
+
+    blcf->upstream.upstream = ngx_http_upstream_add(cf, &url, 0);
+    if (blcf->upstream.upstream == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+
+    return NGX_CONF_OK;
 }
 
 
@@ -240,7 +274,62 @@ ngx_http_beanstalkd_query(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_beanstalkd_loc_conf_t  *blcf = conf;
     ngx_str_t                       *value;
-    ngx_array_t                    **
+    ngx_array_t                    **query;
+    ngx_uint_t                       n;
+    ngx_http_complex_value_t       **arg;
+    ngx_uint_t                       i;
+
+    ngx_http_compile_complex_value_t        ccv;
+
+    if (blcf->queries == NULL) {
+        blcf->queries = ngx_array_create(cf->pool, 1, sizeof(ngx_array_t *));
+
+        if (blcf->queries == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    query = ngx_array_push(blcf->queries);
+    if (query == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    n = cf->args->nelts - 1;
+
+    *query = ngx_array_create(cf->pool, n, sizeof(ngx_http_complex_value_t *));
+
+    if (*query == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    value = cf->args->elts;
+
+    for (i = 1; i <= n; i++) {
+        arg = ngx_array_push(*query);
+        if (arg == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        *arg = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t));
+        if (*arg == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        if (value[i].len == 0) {
+            ngx_memzero(*arg, sizeof(ngx_http_complex_value_t));
+            continue;
+        }
+
+        ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+        ccv.cf = cf;
+        ccv.value = &value[i];
+        ccv.complex_value = *arg;
+
+        if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
     return NGX_CONF_OK;
 }
 
@@ -250,7 +339,10 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
 {
     ngx_int_t                            rc;
     ngx_http_upstream_t                 *u;
+    ngx_http_beanstalkd_ctx_t           *ctx;
     ngx_http_beanstalkd_loc_conf_t      *blcf;
+    ngx_str_t                            target;
+    ngx_url_t                            url;
 
     dd("beanstalkd handler");
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
@@ -273,10 +365,37 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
 
     u = r->upstream;
 
+    blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
+
+    if (blcf->complex_target) {
+        if (ngx_http_complex_value(r, blcf->complex_target, &target)
+                != NGX_OK)
+        {
+            return NGX_ERROR;
+        }
+
+        if (target.len == 0) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                    "handler: empty \"beanstalkd_pass\" target");
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        url.host = target;
+        url.port = 0;
+        url.no_resolve = 1;
+
+        blcf->upstream.upstream = ngx_http_beanstalkd_upstream_add(r, &url);
+
+        if (blcf->upstream.upstream == NULL) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                   "beanstalkd: upstream \"%V\" not found", &target);
+
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+    }
+
     ngx_str_set(&u->schema, "beanstalkd://");
     u->output.tag = (ngx_buf_tag_t) &ngx_http_beanstalkd_module;
-
-    blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
 
     u->conf = &blcf->upstream;
 
@@ -286,19 +405,28 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
     u->abort_request = ngx_http_beanstalkd_abort_request;
     u->finalize_request = ngx_http_beanstalkd_finalize_request;
 
+    ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_beanstalkd_ctx_t));
+    if (ctx == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    ctx->request = r;
+    ctx->state = NGX_ERROR;
+
+    ngx_http_set_ctx(r, ctx, ngx_http_beanstalkd_module);
+
     u->input_filter_init = ngx_http_beanstalkd_filter_init;
     u->input_filter = ngx_http_beanstalkd_filter;
+    u->input_filter_ctx = ctx;
 
     r->main->count++;
 
     ngx_http_upstream_init(r);
 
     return NGX_DONE;
-
-    return NGX_OK;
 }
 
-
+/*
 static ngx_int_t
 ngx_http_beanstalkd_add_variable(ngx_conf_t *cf, ngx_str_t *name)
 {
@@ -312,21 +440,100 @@ ngx_http_beanstalkd_add_variable(ngx_conf_t *cf, ngx_str_t *name)
     v->get_handler = ngx_http_beanstalkd_variable_not_found;
 
     return ngx_http_get_variable_index(cf, name);
-}
+}*/
 
-
+/*
 static ngx_int_t
 ngx_http_beanstalkd_variable_not_found(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data)
 {
     v->not_found = 1;
     return NGX_OK;
-}
+}*/
 
+ngx_http_upstream_srv_conf_t *
+ngx_http_beanstalkd_upstream_add(ngx_http_request_t *r, ngx_url_t *url)
+{
+    ngx_http_upstream_main_conf_t  *umcf;
+    ngx_http_upstream_srv_conf_t  **uscfp;
+    ngx_uint_t                      i;
+
+    umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
+
+    uscfp = umcf->upstreams.elts;
+
+    for (i = 0; i < umcf->upstreams.nelts; i++) {
+
+        if (uscfp[i]->host.len != url->host.len
+            || ngx_strncasecmp(uscfp[i]->host.data, url->host.data,
+               url->host.len) != 0)
+        {
+            dd("upstream_add: host not match");
+            continue;
+        }
+
+        if (uscfp[i]->port != url->port) {
+            dd("upstream_add: port not match: %d != %d",
+                    (int) uscfp[i]->port, (int) url->port);
+            continue;
+        }
+
+        if (uscfp[i]->default_port && url->default_port
+            && uscfp[i]->default_port != url->default_port)
+        {
+            dd("upstream_add: default_port not match");
+            continue;
+        }
+
+        return uscfp[i];
+    }
+
+    dd("no upstream found: %.*s", (int) url->host.len, url->host.data);
+
+    return NULL;
+}
 
 static ngx_int_t
 ngx_http_beanstalkd_create_request(ngx_http_request_t *r)
 {
+    ngx_buf_t                           *b = NULL;
+    ngx_chain_t                         *cl;
+    ngx_http_beanstalkd_loc_conf_t      *blcf;
+    //ngx_str_t                            query;
+    //ngx_str_t                            query_count;
+    ngx_int_t                            rc;
+    ngx_http_beanstalkd_ctx_t           *ctx;
+    //ngx_int_t                            n;
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
+
+    blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
+
+    if (blcf->queries) {
+        ctx->query_count = blcf->queries->nelts;
+
+        rc = ngx_http_beanstalkd_build_query(r, blcf->queries, &b);
+        if (rc != NGX_OK) {
+            return rc;
+        }
+
+    } else {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "No beanstalkd_query specified");
+
+        return NGX_ERROR;
+    }
+
+    cl = ngx_alloc_chain_link(r->pool);
+    if (cl == NULL) {
+        return NGX_ERROR;
+    }
+
+    cl->buf = b;
+    cl->next = NULL;
+
+    r->upstream->request_bufs = cl;
+
     return NGX_OK;
 }
 
@@ -369,4 +576,11 @@ static void
 ngx_http_beanstalkd_finalize_request(ngx_http_request_t *r,
     ngx_int_t rc)
 {
+}
+
+ngx_int_t
+ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
+        ngx_array_t *queries, ngx_buf_t **b)
+{
+    return NGX_OK;
 }
