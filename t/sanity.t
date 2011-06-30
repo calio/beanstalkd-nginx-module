@@ -3,7 +3,7 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(2);
+#repeat_each(2);
 
 plan tests => repeat_each() * 2 * blocks();
 
@@ -35,6 +35,7 @@ __DATA__
 === TEST 2: simple put query
 --- config
     location /foo {
+        set $job "hello";
         beanstalkd_query put 1 1 1 $job;
         beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }

@@ -10,8 +10,8 @@
 
 
 typedef enum {
-    ngx_http_beanstalkd_cmd_put;
-    ngx_http_beanstalkd_cmd_unknown;
+    ngx_http_beanstalkd_cmd_put,
+    ngx_http_beanstalkd_cmd_unknown,
 } ngx_http_beanstalkd_cmd_t;
 
 typedef struct {
@@ -53,11 +53,15 @@ static void ngx_http_beanstalkd_finalize_request(ngx_http_request_t *r,
 
 ngx_int_t ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
         ngx_array_t *queries, ngx_buf_t **b);
+ngx_array_t *ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
+        *queries);
+ngx_int_t ngx_http_beanstalkd_build_put_query(ngx_http_request_t *r,
+        ngx_array_t *queries, ngx_buf_t **b);
+ngx_http_beanstalkd_cmd_t ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd);
 
-static ngx_flag_t ngx_http_beanstalkd_enabled = 0; //static ngx_int_t  ngx_http_beanstalkd_cmd_index;
+static size_t ngx_get_num_size(uint64_t i);
 
-
-//static ngx_str_t  ngx_http_beanstalkd_cmd = ngx_string("beanstalkd_cmd");
+static ngx_flag_t ngx_http_beanstalkd_enabled = 0;
 
 
 static ngx_command_t  ngx_http_beanstalkd_commands[] = {
@@ -510,6 +514,7 @@ ngx_http_beanstalkd_create_request(ngx_http_request_t *r)
     ngx_http_beanstalkd_ctx_t           *ctx;
     //ngx_int_t                            n;
 
+    dd("ngx_http_beanstalkd_create_request");
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
     blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
@@ -574,6 +579,9 @@ ngx_http_beanstalkd_filter(void *data, ssize_t bytes)
 static void
 ngx_http_beanstalkd_abort_request(ngx_http_request_t *r)
 {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "abort http beanstalkd request");
+    return;
 }
 
 
@@ -581,69 +589,198 @@ static void
 ngx_http_beanstalkd_finalize_request(ngx_http_request_t *r,
     ngx_int_t rc)
 {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "finalize http beanstalkd request");
+    return;
 }
 
 ngx_int_t
 ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
         ngx_array_t *queries, ngx_buf_t **b)
 {
-    ngx_http_beanstalkd_loc_conf_t  *blcf;
     ngx_array_t                     *cmds;
-    size_t                           len;
+    ngx_http_beanstalkd_cmd_t       *cmd;
+    ngx_array_t                    **query_args;
 
-    blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
-
+    dd("ngx_http_beanstalkd_build_query");
     cmds = ngx_http_beanstalkd_parse_cmds(r, queries);
-    if (cmd == NULL) {
-        ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+    if (cmds == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                 "beanstalkd: beanstalkd parse command error");
 
         return NGX_ERROR;
     }
 
-    /* calculate the length of bufer needed to store the request commands */
+    /* only one command per query is supported */
+    if (cmds->nelts != 1) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "beanstalkd: only one command per query is supported");
 
-    *b = ngx_create_temp_buf(r->pool, len);
-    /* fill the buffer with each command */
+        return NGX_ERROR;
+    }
+
+    cmd = cmds->elts;
+    query_args = queries->elts;
+
+    switch (*cmd) {
+        case ngx_http_beanstalkd_cmd_put:
+            if (ngx_http_beanstalkd_build_put_query(r, query_args[0], b) != NGX_OK) {
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                    "beanstalkd: ngx_http_beanstalkd_build_put_query failed");
+
+                return NGX_ERROR;
+            }
+            break;
+        default:
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "beanstalkd: parsed query command not recognized");
+
+            return NGX_ERROR;
+    }
 
     return NGX_OK;
+}
+
+ngx_int_t
+ngx_http_beanstalkd_build_put_query(ngx_http_request_t *r,
+        ngx_array_t *query_args, ngx_buf_t **b)
+{
+    ngx_uint_t                       i;
+    ngx_str_t                       *arg;
+    ngx_array_t                     *args;
+    ngx_http_complex_value_t       **complex_arg;
+    size_t                           len = 0;
+    u_char                          *p;
+
+    dd("ngx_http_beanstalkd_build_put_query");
+
+    dd("query_args->nelts:%d", (int) query_args->nelts);
+
+    args = ngx_array_create(r->pool, query_args->nelts, sizeof(ngx_str_t));
+
+    if (args == NULL) {
+        return NGX_ERROR;
+    }
+
+    complex_arg = query_args->elts;
+
+    /* beanstalkd_query put <pri> <delay> <ttr> $job */
+    if (query_args->nelts != 5) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+            "beanstalkd: number of beanstalkd_query arguments does not equal 5, actual number:%uz", query_args->nelts);
+
+        return NGX_ERROR;
+    }
+
+    /* calculate the length of bufer needed to store the request commands */
+    for (i = 0; i < query_args->nelts; i++) {
+        arg = ngx_array_push(args);
+        if (arg == NULL) {
+            return NGX_ERROR;
+        }
+
+        if (ngx_http_complex_value(r, complex_arg[i], arg) != NGX_OK) {
+            return NGX_ERROR;
+        }
+    }
+
+    arg = args->elts;
+
+    len += arg[0].len
+         + arg[1].len
+         + arg[2].len
+         + arg[3].len
+         + ngx_get_num_size(arg[4].len)
+         + arg[4].len
+         + (sizeof(" ") - 1) * 4
+         + (sizeof("\r\n") - 1) * 2;
+
+    dd("len = %d", (int)len);
+
+    *b = ngx_create_temp_buf(r->pool, len);
+    if (*b == NULL) {
+        return NGX_ERROR;
+    }
+
+    p = (*b)->pos;
+
+    /* fill the buffer with each command */
+    for (i = 0; i < 4; i++) {
+        p = ngx_copy(p, arg[i].data, arg[i].len);
+        *p++ = ' ';
+    }
+
+    p = ngx_sprintf(p, "%uz", arg[4].len);
+    *p++ = '\r'; *p++ = '\n';
+
+    p = ngx_copy(p, arg[4].data, arg[4].len);
+    *p++ = '\r'; *p++ = '\n';
+
+    dd("query:%.*s", (int) (p - (*b)->pos), (*b)->pos);
+
+    if (p - (*b)->pos != (ssize_t) len) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "beanstalkd: beanstalkd_query buffer error %uz != %uz",
+                (size_t) (p - (*b)->pos), len);
+
+        return NGX_ERROR;
+    }
+
+    (*b)->last = p;
+
+    return NGX_OK;
+}
+
+static size_t
+ngx_get_num_size(uint64_t i)
+{
+    size_t          n = 0;
+
+    do {
+        i = i / 10;
+        n++;
+    } while (i > 0);
+
+    return n;
 }
 
 ngx_array_t *
 ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
         *queries)
 {
-    ngx_int_t                    n, i, j;
-    ngx_array_t                 *cmds, *query;
-    ngx_http_complex_value_t    *query_cmd;
-    ngx_str_t                   query_cmd_str;
+    ngx_int_t                    n, i;
+    ngx_array_t                 *cmds, **query;
+    ngx_http_complex_value_t   **query_cmd;
+    ngx_str_t                    query_cmd_str;
     ngx_http_beanstalkd_cmd_t   *cmd;
 
-    n = queries->args->nelts;
+    n = queries->nelts;
 
     cmds = ngx_array_create(r->pool, n, sizeof(ngx_http_beanstalkd_cmd_t));
     if (cmds == NULL) {
-            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                 "beanstalkd: can't create cmds array, ngx_array_create failed");
 
         return NULL;
     }
 
+    query = queries->elts;
     for (i = 0; i < n; i++) {
-        query = queries->args->elts[i];
+        query_cmd = query[i]->elts;
 
-        query_cmd = query->args->elts[1];
-
+        dd("i=%d", (int) i);
         cmd = ngx_array_push(cmds);
         if (cmd == NULL) {
-            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                 "beanstalkd: can't push from cmd array, ngx_array_push failed");
+        }
 
-        if (ngx_http_complex_value(r, query_cmd, &query_cmd_str) != NGX_OK) {
-            ngx_log_error(NGX_LOG_ERROR, r->connection->log, 0,
+        if (ngx_http_complex_value(r, query_cmd[0], &query_cmd_str) != NGX_OK) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                 "beanstalkd: can't get complex value, ngx_http_complex_value failed");
             return NULL;
         }
+        dd("query_cmd_str:%.*s", (int) query_cmd_str.len, query_cmd_str.data);
 
         *cmd = ngx_http_beanstalkd_parse_cmd(query_cmd_str);
     }
@@ -651,8 +788,8 @@ ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
     return cmds;
 }
 
-ngx_http_beanstalkd_cmd_t *
-ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd);
+ngx_http_beanstalkd_cmd_t
+ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd)
 {
     switch (cmd.len) {
         case 3:
@@ -662,8 +799,10 @@ ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd);
                 return ngx_http_beanstalkd_cmd_unknown;
             }
             break;
+
         default:
             return ngx_http_beanstalkd_cmd_unknown;
     }
 
+    return ngx_http_beanstalkd_cmd_unknown;
 }
