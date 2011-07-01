@@ -41,6 +41,4 @@ __DATA__
     }
 --- request
     GET /foo
---- response_body eval
-"INSERTED 1\r\n"
---- ONLY
+--- response_body_like: ^INSERTED \d+\r\n$

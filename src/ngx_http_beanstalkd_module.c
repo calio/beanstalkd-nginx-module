@@ -8,25 +8,8 @@
 #include <ngx_http.h>
 #include <nginx.h>
 
-
-typedef enum {
-    ngx_http_beanstalkd_cmd_put,
-    ngx_http_beanstalkd_cmd_unknown,
-} ngx_http_beanstalkd_cmd_t;
-
-typedef struct {
-    ngx_http_upstream_conf_t     upstream;
-    ngx_http_complex_value_t    *complex_target; /* for beanstalkd_pass */
-    ngx_array_t                 *queries;
-} ngx_http_beanstalkd_loc_conf_t;
-
-typedef struct {
-    ngx_uint_t           query_count;
-    ngx_http_request_t  *request;
-    ngx_int_t            state;
-    ngx_array_t         *cmds;
-    ngx_int_t           *cmd_index;
-} ngx_http_beanstalkd_ctx_t;
+#include "ngx_http_beanstalkd_module.h"
+#include "ngx_http_beanstalkd_response.h"
 
 static void *ngx_http_beanstalkd_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_beanstalkd_merge_loc_conf(ngx_conf_t *cf, void *parent,
@@ -560,13 +543,19 @@ ngx_http_beanstalkd_reinit_request(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_beanstalkd_process_header(ngx_http_request_t *r)
 {
-    return NGX_OK;
+    int rc;
+
+    dd("ngx_http_beanstalkd_process_header");
+    rc = ngx_http_beanstalkd_process_simple_header(r);
+    return rc;
 }
 
 
 static ngx_int_t
 ngx_http_beanstalkd_filter_init(void *data)
 {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "filter http beanstalkd response init");
     return NGX_OK;
 }
 
@@ -574,6 +563,8 @@ ngx_http_beanstalkd_filter_init(void *data)
 static ngx_int_t
 ngx_http_beanstalkd_filter(void *data, ssize_t bytes)
 {
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "filter http beanstalkd response");
     return NGX_OK;
 }
 

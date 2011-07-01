@@ -2,13 +2,13 @@
 
 # this file is mostly meant to be used by the author himself.
 
-#ragel -I src -G2 src/ngx_http_beanstalkd_response.rl
-#
-#if [ $? != 0 ]; then
-#    echo 'Failed to generate the memcached response parser.' 1>&2
-#    exit 1;
-#fi
-#
+ragel -I src -G2 src/ngx_http_beanstalkd_response.rl
+
+if [ $? != 0 ]; then
+    echo 'Failed to generate the memcached response parser.' 1>&2
+    exit 1;
+fi
+
 root=`pwd`
 #cd ~/work
 version=$1
@@ -42,6 +42,8 @@ cd nginx-$version/
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=$target \
         --with-cc-opt="-O2" \
+        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
+        --with-ld-opt="-lgcov" \
           --with-http_addition_module \
             --without-mail_pop3_module \
             --without-mail_imap_module \
@@ -53,10 +55,10 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
             --without-http_autoindex_module \
             --without-http_auth_basic_module \
             --without-http_userid_module \
-            #--with-http_ssl_module \
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
           --add-module=$root/../echo-nginx-module
+            #--with-http_ssl_module \
           #--with-debug
 #          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93
 #          --add-module=$root/../eval-nginx-module \
