@@ -24,6 +24,8 @@ typedef struct {
     ngx_uint_t           query_count;
     ngx_http_request_t  *request;
     ngx_int_t            state;
+    ngx_array_t         *cmds;
+    ngx_int_t           *cmd_index;
 } ngx_http_beanstalkd_ctx_t;
 
 static void *ngx_http_beanstalkd_create_loc_conf(ngx_conf_t *cf);
@@ -601,6 +603,7 @@ ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
     ngx_array_t                     *cmds;
     ngx_http_beanstalkd_cmd_t       *cmd;
     ngx_array_t                    **query_args;
+    ngx_http_beanstalkd_ctx_t       *ctx;
 
     dd("ngx_http_beanstalkd_build_query");
     cmds = ngx_http_beanstalkd_parse_cmds(r, queries);
@@ -610,6 +613,10 @@ ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
 
         return NGX_ERROR;
     }
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
+
+    ctx->cmds = cmds;
 
     /* only one command per query is supported */
     if (cmds->nelts != 1) {
