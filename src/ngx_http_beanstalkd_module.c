@@ -1,8 +1,6 @@
 #define DDEBUG 1
 #include "ddebug.h"
 
-//#include "ngx_http_beanstalkd_module.h"
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
@@ -182,17 +180,6 @@ ngx_http_beanstalkd_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 static
 ngx_int_t ngx_http_beanstalkd_init(ngx_conf_t *cf)
 {
-    /*
-    if (!ngx_http_beanstalkd_enabled) {
-        return NGX_OK;
-    }
-
-    if ((ngx_http_beanstalkd_cmd_index = ngx_http_beanstalkd_add_variable(
-        cf, &ngx_http_beanstalkd_cmd)) == NGX_ERROR)
-    {
-        return NGX_ERROR;
-    }
-    */
     return NGX_OK;
 }
 
@@ -419,31 +406,6 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
 
     return NGX_DONE;
 }
-
-/*
-static ngx_int_t
-ngx_http_beanstalkd_add_variable(ngx_conf_t *cf, ngx_str_t *name)
-{
-    ngx_http_variable_t *v;
-
-    v =ngx_http_add_variable(cf, name, NGX_HTTP_VAR_CHANGEABLE);
-    if (v == NULL) {
-        return NGX_ERROR;
-    }
-
-    v->get_handler = ngx_http_beanstalkd_variable_not_found;
-
-    return ngx_http_get_variable_index(cf, name);
-}*/
-
-/*
-static ngx_int_t
-ngx_http_beanstalkd_variable_not_found(ngx_http_request_t *r,
-    ngx_http_variable_value_t *v, uintptr_t data)
-{
-    v->not_found = 1;
-    return NGX_OK;
-}*/
 
 ngx_http_upstream_srv_conf_t *
 ngx_http_beanstalkd_upstream_add(ngx_http_request_t *r, ngx_url_t *url)
