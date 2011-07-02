@@ -1,1 +1,3 @@
 beanstalkd-nginx-module is a nginx module that talks to beanstalkd
+
+It is still under development, will be released soon.
