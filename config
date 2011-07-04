@@ -1,4 +1,4 @@
 ngx_addon_name=ngx_http_beanstalkd_module
 HTTP_MODULES="$HTTP_MODULES ngx_http_beanstalkd_module"
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_http_beanstalkd_module.c $ngx_addon_dir/src/ngx_http_beanstalkd_response.c"
-NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/src/ddebug.h $ngx_addon_dir/src/ngx_http_beanstalkd_response.h"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_http_beanstalkd_module.c $ngx_addon_dir/src/ngx_http_beanstalkd_response.c $ngx_addon_dir/src/ngx_http_beanstalkd_handler.c $ngx_addon_dir/src/ngx_http_beanstalkd_query.c $ngx_addon_dir/src/ngx_http_beanstalkd_utils.c"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/src/ddebug.h $ngx_addon_dir/src/ngx_http_beanstalkd_response.h $ngx_addon_dir/src/ngx_http_beanstalkd_handler.h $ngx_addon_dir/src/ngx_http_beanstalkd_query.h $ngx_addon_dir/src/ngx_http_beanstalkd_utils.h"

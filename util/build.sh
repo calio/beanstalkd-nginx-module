@@ -42,7 +42,6 @@ cd nginx-$version/
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=$target \
         --with-cc-opt="-O2" \
-        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
         --with-ld-opt="-lgcov" \
           --with-http_addition_module \
             --without-mail_pop3_module \
@@ -57,9 +56,10 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
             --without-http_userid_module \
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
+          --with-debug \
           --add-module=$root/../echo-nginx-module
+#        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
             #--with-http_ssl_module \
-          #--with-debug
 #          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93
 #          --add-module=$root/../eval-nginx-module \
           #--add-module=$home/work/nginx/nginx_upstream_hash-0.3 \

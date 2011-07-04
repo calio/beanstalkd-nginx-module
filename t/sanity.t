@@ -14,7 +14,7 @@ $ENV{TEST_NGINX_BEANSTALKD_PORT} ||= 11300;
 
 #no_diff;
 
-log_level 'warn';
+#log_level 'warn';
 
 run_tests();
 
@@ -44,6 +44,7 @@ __DATA__
 --- response_body_like: ^INSERTED \d+\r\n$
 
 
+
 === TEST 3: simple put query, autoredirect
 --- config
     location /foo/ {
@@ -55,6 +56,7 @@ __DATA__
     GET /foo
 --- response_body_like: ^INSERTED \d+\r\n$
 --- SKIP
+
 
 
 === TEST 4: simple put query, cmd in variable
@@ -70,7 +72,8 @@ __DATA__
 --- response_body_like: ^INSERTED \d+\r\n$
 
 
-=== TEST 4: simple put query 3, command in string
+
+=== TEST 5: simple put query 3, command in string
 --- config
     location /foo {
         set $job "hello";
@@ -84,7 +87,7 @@ __DATA__
 
 
 
-=== TEST 4: simple put query 3, length of job is 0
+=== TEST 6: simple put query 3, length of job is 0
 --- config
     location /foo {
         set $cmd "put";
@@ -97,7 +100,7 @@ __DATA__
 
 
 
-=== TEST 4: simple put query 3, beanstalkd_pass to an upstream
+=== TEST 7: simple put query 3, beanstalkd_pass to an upstream
 --- http_config
     upstream backend {
         server 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
@@ -114,7 +117,8 @@ __DATA__
 --- response_body_like: ^INSERTED \d+\r\n$
 
 
-=== TEST 4: simple put query 3, beanstalkd_pass to multi upstream
+
+=== TEST 8: simple put query 3, beanstalkd_pass to multi upstream
 --- http_config
     upstream backend {
         server 127.0.0.1:3306;
@@ -130,9 +134,10 @@ __DATA__
 --- request
     GET /foo
 --- response_body_like: ^INSERTED \d+\r\n$
---- ONLY
 
-=== TEST 5: simple put query 3, beanstalk_pass destination is empty
+
+
+=== TEST 9: simple put query 3, beanstalk_pass destination is empty
 --- http_config
     upstream backend {
         server 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
@@ -146,10 +151,12 @@ __DATA__
     }
 --- request
     GET /foo
---- response_body_like: ^INSERTED \d+\r\n$
+--- response_body_like: 500 Internal Server Error
+--- error_code: 500
 
 
-=== TEST 4: unknown command query 3
+
+=== TEST 10: unknown command query 3
 --- config
     location /foo {
         set $cmd "put-cmd";
@@ -162,7 +169,8 @@ __DATA__
 --- error_code: 500
 
 
-=== TEST 4: unknown command query 3
+
+=== TEST 11: unknown command query 3
 --- config
     location /foo {
         set $cmd "put";
@@ -175,7 +183,8 @@ __DATA__
 --- error_code: 500
 
 
-=== TEST 4: unknown command query 3
+
+=== TEST 12: unknown command query 3
 --- config
     location /foo {
         set $cmd "put";
@@ -187,7 +196,9 @@ __DATA__
 --- response_body_like: 500 Internal Server Error
 --- error_code: 500
 
-=== TEST 4: more than 1 command1 query
+
+
+=== TEST 13: more than 1 command1 query
 --- config
     location /foo {
         beanstalkd_query put 1 1 1 "one";
@@ -201,7 +212,7 @@ __DATA__
 
 
 
-=== TEST 4: wrong command arguments
+=== TEST 14: wrong command arguments
 --- config
     location /foo {
         beanstalkd_query put 1 1 "one";

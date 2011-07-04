@@ -59,6 +59,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                       "unrecognized beanstalkd command in "
                       "ngx_http_beanstalkd_process_simple_header");
 
+                    u->length = 0;
+
                     return NGX_ERROR; /* this results in 500 status */
             }
         }
@@ -87,6 +89,7 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
             break;
 
         default:
+            u->length = 0;
             return NGX_ERROR;
     }
 
@@ -107,10 +110,11 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                   (off_t) (p - orig), &resp);
 
         status = NGX_HTTP_BAD_GATEWAY;
+        /* u->headers_in.status_n will be the final status */
         u->headers_in.status_n = status;
         u->state->status = status;
 
-        /* u->headers_in.status_n will be the final status */
+        u->length = 0;
         return NGX_OK;
     }
 
@@ -120,6 +124,9 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
         rc = ngx_http_beanstalkd_write_simple_response(r, u, ctx, status, &resp);
 
+        u->length = 0;
+
+        dd("rc = %d, u->length: %d", (int) rc, (int) u->length);
         return rc;
     }
 

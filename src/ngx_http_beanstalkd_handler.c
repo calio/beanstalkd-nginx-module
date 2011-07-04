@@ -177,8 +177,15 @@ ngx_http_beanstalkd_process_header(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_beanstalkd_filter_init(void *data)
 {
-    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "filter http beanstalkd response init");
+    ngx_http_beanstalkd_ctx_t   *ctx = data;
+    ngx_http_upstream_t         *u;
+
+    dd("filter http beanstalkd filter init");
+
+    u = ctx->request->upstream;
+
+    u->length = 0;
+
     return NGX_OK;
 }
 
@@ -186,8 +193,7 @@ ngx_http_beanstalkd_filter_init(void *data)
 static ngx_int_t
 ngx_http_beanstalkd_filter(void *data, ssize_t bytes)
 {
-    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "filter http beanstalkd response");
+    dd("filter http beanstalkd filter");
     return NGX_OK;
 }
 

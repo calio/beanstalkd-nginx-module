@@ -78,6 +78,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                       "unrecognized beanstalkd command in "
                       "ngx_http_beanstalkd_process_simple_header");
 
+                    u->length = 0;
+
                     return NGX_ERROR; /* this results in 500 status */
             }
         }
@@ -106,6 +108,7 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
             break;
 
         default:
+            u->length = 0;
             return NGX_ERROR;
     }
 
@@ -126,10 +129,11 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                   (off_t) (p - orig), &resp);
 
         status = NGX_HTTP_BAD_GATEWAY;
+        /* u->headers_in.status_n will be the final status */
         u->headers_in.status_n = status;
         u->state->status = status;
 
-        /* u->headers_in.status_n will be the final status */
+        u->length = 0;
         return NGX_OK;
     }
 
@@ -139,6 +143,9 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
         rc = ngx_http_beanstalkd_write_simple_response(r, u, ctx, status, &resp);
 
+        u->length = 0;
+
+        dd("rc = %d, u->length: %d", (int) rc, (int) u->length);
         return rc;
     }
 
@@ -189,11 +196,11 @@ parse_beanstalkd_put(int *cs_addr, u_char *p, u_char *pe, ngx_uint_t *status_add
     int cs = *cs_addr;
 
     
-#line 173 "src/ngx_http_beanstalkd_response.rl"
+#line 180 "src/ngx_http_beanstalkd_response.rl"
     
-#line 174 "src/ngx_http_beanstalkd_response.rl"
+#line 181 "src/ngx_http_beanstalkd_response.rl"
     
-#line 197 "src/ngx_http_beanstalkd_response.c"
+#line 204 "src/ngx_http_beanstalkd_response.c"
 	{
 	if ( p == pe )
 		goto _test_eof;
@@ -317,7 +324,7 @@ st92:
 	if ( ++p == pe )
 		goto _test_eof92;
 case 92:
-#line 321 "src/ngx_http_beanstalkd_response.c"
+#line 328 "src/ngx_http_beanstalkd_response.c"
 	goto st0;
 st13:
 	if ( ++p == pe )
@@ -973,7 +980,7 @@ case 91:
 	_out: {}
 	}
 
-#line 175 "src/ngx_http_beanstalkd_response.rl"
+#line 182 "src/ngx_http_beanstalkd_response.rl"
 
     *cs_addr = cs;
 
