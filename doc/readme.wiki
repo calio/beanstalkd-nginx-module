@@ -1,0 +1,78 @@
+﻿= Name =
+
+'''beanstalkd-nginx-module''' - An nginx module that talks to beanstalkd(a fast, general-purpose work queue). It supports put, reserve, delete, and many more beanstalkd commands.
+
+''This module is not distributed with the Nginx source.'' See [[#Installation|the installation instructions]].
+
+= Version =
+
+This module is still under development, will be released soon.
+
+= Synopsis =
+
+<geshi lang="nginx">
+    location /foo {
+        set $job "hello";
+        beanstalkd_query put 1 1 1 $job;
+        beanstalkd_pass 127.0.0.1:11300;
+    }
+</geshi>
+
+<geshi lang="nginx">
+  http {
+    ...
+    upstream backend {
+       server 127.0.0.1:11300;
+       server 127.0.0.1:11301;
+    }
+    server {
+        location /foo {
+            set $cmd "put";
+            set $dest "backend";
+            beanstalkd_query $cmd 1 1 1 "hello";
+            beanstalkd_pass $dest;
+        }
+        ...
+    }
+  }
+  ...
+</geshi>
+
+= Description =
+
+This module supports almost the whole [https://github.com/kr/beanstalkd/blob/master/doc/protocol.txt beanstalkd ascii protocol].
+
+It allows you to define a custom [http://en.wikipedia.org/wiki/REST REST] interface to your beanstalkd servers or access beanstalkd in a very efficient way from within the nginx server.
+
+This module is not supposed to be merged into the Nginx core because I've used [http://www.complang.org/ragel/ Ragel] to generate the beanstalkd response parsers (in C) for joy :)
+
+= Copyright & License =
+
+The code base is borrowed directly from the standard [[NginxHttpMemcachedModule|beanstalkd module]] in the Nginx 1.0.4 core. This part of code is copyrighted by Igor Sysoev.
+
+Copyright (c) 2009, 2010, 2011, Taobao Inc., Alibaba Group ( http://www.taobao.com ).
+
+Copyright (c) 2011, Calio <vipcalio@gmail.com>.
+
+Copyright (c) 2009, 2010, 2011, Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>.
+
+This module is licensed under the terms of the BSD license.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
