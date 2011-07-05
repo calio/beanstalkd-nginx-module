@@ -4,8 +4,21 @@
 #include "ngx_http_beanstalkd_module.h"
 #include "ngx_http_beanstalkd_response.h"
 
+
+static u_char * parse_beanstalkd_put(int *cs_addr, u_char *p, u_char *pe,
+        ngx_uint_t *status_addr, ngx_flag_t *done_addr);
+static u_char * parse_beanstalkd_delete(int *cs_addr, u_char *p, u_char *pe,
+        ngx_uint_t *status_addr, ngx_flag_t *done_addr);
+static u_char * parse_beanstalkd_reserve(int *cs_addr, u_char *p, u_char *pe, ngx_uint_t *status_addr, ngx_flag_t *done_addr, ngx_http_beanstalkd_ctx_t *ctx);
+
+
 %% machine beanstalkd_put;
 %% write data;
+%% machine beanstalkd_delete;
+%% write data;
+%% machine beanstalkd_reserve;
+%% write data;
+
 
 ngx_int_t
 ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
@@ -54,6 +67,23 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
                     break;
 
+                case ngx_http_beanstalkd_cmd_delete:
+                    dd("init beanstalkd_delete machine...");
+
+                    %% machine beanstalkd_delete;
+                    %% write init;
+
+                    break;
+
+                case ngx_http_beanstalkd_cmd_reserve:
+                case ngx_http_beanstalkd_cmd_reserve_with_timeout:
+                    dd("init beanstalkd_reserve machine...");
+
+                    %% machine beanstalkd_reserve;
+                    %% write init;
+
+                    break;
+
                 default:
                     ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "unrecognized beanstalkd command in "
@@ -86,6 +116,19 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
             p = parse_beanstalkd_put(&cs, p, pe, &status, &done);
 
             error_state = beanstalkd_put_error;
+            break;
+
+        case ngx_http_beanstalkd_cmd_delete:
+            p = parse_beanstalkd_delete(&cs, p, pe, &status, &done);
+
+            error_state = beanstalkd_delete_error;
+            break;
+
+        case ngx_http_beanstalkd_cmd_reserve:
+        case ngx_http_beanstalkd_cmd_reserve_with_timeout:
+            p = parse_beanstalkd_reserve(&cs, p, pe, &status, &done, ctx);
+
+            error_state = beanstalkd_reserve_error;
             break;
 
         default:
@@ -171,13 +214,41 @@ ngx_http_beanstalkd_write_simple_response(ngx_http_request_t *r,
     return NGX_OK;
 }
 
-u_char *
+static u_char *
 parse_beanstalkd_put(int *cs_addr, u_char *p, u_char *pe, ngx_uint_t *status_addr, ngx_flag_t *done_addr)
 {
     int cs = *cs_addr;
 
     %% machine beanstalkd_put;
     %% include "beanstalkd_put.rl";
+    %% write exec;
+
+    *cs_addr = cs;
+
+    return p;
+}
+
+static u_char *
+parse_beanstalkd_delete(int *cs_addr, u_char *p, u_char *pe, ngx_uint_t *status_addr, ngx_flag_t *done_addr)
+{
+    int cs = *cs_addr;
+
+    %% machine beanstalkd_delete;
+    %% include "beanstalkd_delete.rl";
+    %% write exec;
+
+    *cs_addr = cs;
+
+    return p;
+}
+
+static u_char *
+parse_beanstalkd_reserve(int *cs_addr, u_char *p, u_char *pe, ngx_uint_t *status_addr, ngx_flag_t *done_addr, ngx_http_beanstalkd_ctx_t *ctx)
+{
+    int cs = *cs_addr;
+
+    %% machine beanstalkd_reserve;
+    %% include "beanstalkd_reserve.rl";
     %% write exec;
 
     *cs_addr = cs;

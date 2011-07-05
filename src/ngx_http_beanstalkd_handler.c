@@ -184,7 +184,11 @@ ngx_http_beanstalkd_filter_init(void *data)
 
     u = ctx->request->upstream;
 
-    u->length = 0;
+//    if (!ctx->filter_body) {
+        u->length = 0;
+//    } else {
+ //       ctx->rest_body_length += (sizeof("\r\n") -1);
+//    }
 
     return NGX_OK;
 }
@@ -194,6 +198,50 @@ static ngx_int_t
 ngx_http_beanstalkd_filter(void *data, ssize_t bytes)
 {
     dd("filter http beanstalkd filter");
+    /*
+    ngx_http_beanstalkd_ctx_t   *ctx = data;
+    ngx_http_request_t          *r;
+    ngx_http_upstream_t         *u;
+    ngx_str_t                    resp;
+    ngx_uint_t                   status;
+
+    dd("filter http beanstalkd filter");
+
+    r = ctx->request;
+    u = ctx->request->upstream;
+
+    resp.data = u->buffer.last;
+    resp.len = bytes;
+    u->buffer.last += bytes;
+
+    if (r->headers_out.status) {
+        status = r->headers_out.status;
+    } else {
+        status = NGX_HTTP_OK;
+    }
+
+
+    if (ngx_http_beanstalkd_write_simple_response(r, u, ctx, status, &resp) != NGX_OK) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+          "ngx_http_beanstalkd_write_simple_response failed in ngx_http_beanstalkd_filter");
+        u->length = 0;
+
+        return NGX_ERROR;
+    }
+
+    dd("ctx->rest_body_length = %d, resp.len = %d", (int) ctx->rest_body_length, (int) resp.len);
+    ctx->rest_body_length -= (ngx_int_t) resp.len;
+
+    if (ctx->rest_body_length == 0) {
+        u->length = 0;
+    } else if (ctx->rest_body_length < 0) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+          "ctx->rest_body_length < 0");
+        u->length = 0;
+
+        return NGX_ERROR;
+    }
+*/
     return NGX_OK;
 }
 

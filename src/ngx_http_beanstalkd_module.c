@@ -24,6 +24,32 @@ static char *ngx_http_beanstalkd_query(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 
 
+ngx_uint_t ngx_http_beanstalkd_cmd_num_args[] = {
+    5,
+    0,
+    1,
+    2,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+};
+
+
 static ngx_flag_t ngx_http_beanstalkd_enabled = 0;
 
 
@@ -183,10 +209,6 @@ ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     clcf->handler = ngx_http_beanstalkd_handler;
-
-    if (clcf->name.data[clcf->name.len - 1] == '/') {
-        clcf->auto_redirect = 1;
-    }
 
     ngx_http_beanstalkd_enabled = 1;
 

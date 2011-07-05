@@ -57,7 +57,8 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
           --add-module=$root $opts \
           --add-module=$root/../ndk-nginx-module \
           --with-debug \
-          --add-module=$root/../echo-nginx-module
+          --add-module=$root/../echo-nginx-module \
+          --add-module=$root/../lua-nginx-module
 #        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
             #--with-http_ssl_module \
 #          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93
