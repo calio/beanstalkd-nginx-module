@@ -9,6 +9,7 @@
 #include "ngx_http_beanstalkd_handler.h"
 #include "ngx_http_beanstalkd_query.h"
 #include "ngx_http_beanstalkd_response.h"
+#include "ngx_http_beanstalkd_utils.h"
 
 
 static ngx_int_t ngx_http_beanstalkd_create_request(ngx_http_request_t *r);
@@ -30,6 +31,9 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
     ngx_http_beanstalkd_loc_conf_t      *blcf;
     ngx_str_t                            target;
     ngx_url_t                            url;
+    ngx_array_t                         *cmds;
+    ngx_http_beanstalkd_cmd_t           *cmd;
+    ngx_array_t                        **query_args;
 
     dd("beanstalkd handler");
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
@@ -53,6 +57,12 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
     u = r->upstream;
 
     blcf = ngx_http_get_module_loc_conf(r, ngx_http_beanstalkd_module);
+    if (blcf->queries == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "No beanstalkd_query specified");
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
     if (blcf->complex_target) {
         if (ngx_http_complex_value(r, blcf->complex_target, &target)
@@ -81,6 +91,36 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
         }
     }
 
+    dd("check cmd");
+    cmds = ngx_http_beanstalkd_parse_cmds(r, blcf->queries);
+    if (cmds == NULL) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "beanstalkd: beanstalkd parse command error");
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    dd("check number of commands");
+    /* only one command per query is supported */
+    if (cmds->nelts != 1) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "beanstalkd: only one command per query is supported");
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    dd("set queries");
+    cmd = cmds->elts;
+    query_args = blcf->queries->elts;
+
+    dd("begin to check cmd args");
+    if (ngx_http_beanstalkd_cmd_num_args[*cmd] != query_args[0]->nelts) {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+            "beanstalkd: number of beanstalkd_query arguments does not equal %uz, actual number:%uz", ngx_http_beanstalkd_cmd_num_args[*cmd], query_args[0]->nelts);
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+
+    }
+
     ngx_str_set(&u->schema, "beanstalkd://");
     u->output.tag = (ngx_buf_tag_t) &ngx_http_beanstalkd_module;
 
@@ -99,6 +139,7 @@ ngx_http_beanstalkd_handler(ngx_http_request_t *r)
 
     ctx->request = r;
     ctx->state = NGX_ERROR;
+    ctx->cmds = cmds;
 
     ngx_http_set_ctx(r, ctx, ngx_http_beanstalkd_module);
 

@@ -57,10 +57,12 @@ ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
 
         *cmd = ngx_http_beanstalkd_parse_cmd(query_cmd_str);
         if (*cmd == ngx_http_beanstalkd_cmd_unknown) {
+            dd("unkonwn command");
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                 "meet unkonwn command %V", &query_cmd_str);
             return NULL;
         }
+        dd("parse command '%.*s' done", (int) query_cmd_str.len, query_cmd_str.data);
     }
 
     return cmds;
@@ -69,7 +71,7 @@ ngx_http_beanstalkd_parse_cmds(ngx_http_request_t *r, ngx_array_t
 ngx_http_beanstalkd_cmd_t
 ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd)
 {
-    dd("ngx_http_beanstlkd_parse_cmd");
+    dd("ngx_http_beanstalkd_parse_cmd");
 
     switch (cmd.len) {
         case 3:
@@ -158,8 +160,10 @@ ngx_http_beanstalkd_parse_cmd(ngx_str_t cmd)
             break;
 
         default:
+            dd("unkonwn command:%.*s", (int) cmd.len, cmd.data);
             return ngx_http_beanstalkd_cmd_unknown;
     }
 
+    dd("ngx_http_beanstalkd_parse_cmd done");
     return ngx_http_beanstalkd_cmd_unknown;
 }

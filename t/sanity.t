@@ -31,7 +31,6 @@ __DATA__
 --- error_code: 500
 
 
-
 === TEST 2: simple put query
 --- config
     location /foo {

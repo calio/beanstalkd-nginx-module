@@ -47,7 +47,7 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
         status = NGX_HTTP_OK;
     }
 
-    dd("process simple response heander");
+    dd("process simple response header");
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 

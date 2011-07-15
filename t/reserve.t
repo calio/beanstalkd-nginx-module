@@ -21,22 +21,28 @@ run_tests();
 
 __DATA__
 
-
 === TEST 1:
 --- config
+    set $id "";
     location /bar {
         beanstalkd_query put 0 0 10 "hello";
         beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 
     location /foo {
-        echo_location /bar;
+        access_by_lua '
+            ngx.location.capture("/bar")
+        ';
         beanstalkd_query reserve;
         beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 --- request
     GET /foo
 --- response_body_like: ^RESERVED \d+ 5\r\nhello\r\n$
+--- post
+system("killall beanstalkd");
+system("beanstalkd -d");
+
 
 === TEST 2:
 --- config
@@ -46,11 +52,37 @@ __DATA__
     }
 
     location /foo {
-        echo_location /bar;
-        #echo "hi";
+        access_by_lua '
+            ngx.location.capture("/bar")
+        ';
         beanstalkd_query reserve;
         beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 --- request
     GET /foo
---- response_body_like: ^RESERVED \d+ 5\r\n\r\r\n$
+--- response_body_like: ^RESERVED \d+ 1\r\n\r\r\n$
+--- post
+system("killall beanstalkd");
+system("beanstalkd -d");
+
+
+=== TEST 3:
+--- config
+    location /bar {
+        beanstalkd_query put 0 0 10 "\r\n";
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
+    }
+
+    location /foo {
+        access_by_lua '
+            ngx.location.capture("/bar")
+        ';
+        beanstalkd_query reserve;
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
+    }
+--- request
+    GET /foo
+--- response_body_like: ^RESERVED \d+ 2\r\n\r\n\r\n$
+--- post
+system("killall beanstalkd");
+system("beanstalkd -d");

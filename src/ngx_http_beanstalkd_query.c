@@ -19,35 +19,13 @@ ngx_http_beanstalkd_build_query(ngx_http_request_t *r,
     ngx_http_beanstalkd_ctx_t       *ctx;
 
     dd("ngx_http_beanstalkd_build_query");
-    cmds = ngx_http_beanstalkd_parse_cmds(r, queries);
-    if (cmds == NULL) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "beanstalkd: beanstalkd parse command error");
-
-        return NGX_ERROR;
-    }
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
-    ctx->cmds = cmds;
-
-    /* only one command per query is supported */
-    if (cmds->nelts != 1) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "beanstalkd: only one command per query is supported");
-
-        return NGX_ERROR;
-    }
+    cmds = ctx->cmds;
 
     cmd = cmds->elts;
     query_args = queries->elts;
-
-    if (ngx_http_beanstalkd_cmd_num_args[*cmd] != query_args[0]->nelts) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-            "beanstalkd: number of beanstalkd_query arguments does not equal %uz, actual number:%uz", ngx_http_beanstalkd_cmd_num_args[*cmd], query_args[0]->nelts);
-        return NGX_ERROR;
-
-    }
 
     switch (*cmd) {
         case ngx_http_beanstalkd_cmd_put:

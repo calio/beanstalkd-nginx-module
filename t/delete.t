@@ -42,11 +42,10 @@ __DATA__
         set $id "";
         rewrite_by_lua '
             local res = ngx.location.capture("/bar")
-            if res.status ~= 200 then
-                ngx.var.id = "";
+            if (res.status == 200) then
+                id = string.match(res.body, "%d+")
+                ngx.var.id = id
             end
-            id = string.match(res.body, "%d+")
-            ngx.var.id = id;
         ';
         beanstalkd_query delete $id;
         beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
