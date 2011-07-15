@@ -22,6 +22,9 @@ run_tests();
 __DATA__
 
 === TEST 1:
+--- pre
+system("killall beanstalkd");
+system("beanstalkd -d");
 --- config
     set $id "";
     location /bar {
@@ -39,12 +42,12 @@ __DATA__
 --- request
     GET /foo
 --- response_body_like: ^RESERVED \d+ 5\r\nhello\r\n$
---- post
-system("killall beanstalkd");
-system("beanstalkd -d");
 
 
 === TEST 2:
+--- pre
+system("killall beanstalkd");
+system("beanstalkd -d");
 --- config
     location /bar {
         beanstalkd_query put 0 0 10 "\r";
@@ -61,12 +64,12 @@ system("beanstalkd -d");
 --- request
     GET /foo
 --- response_body_like: ^RESERVED \d+ 1\r\n\r\r\n$
---- post
-system("killall beanstalkd");
-system("beanstalkd -d");
 
 
 === TEST 3:
+--- pre
+system("killall beanstalkd");
+system("beanstalkd -d");
 --- config
     location /bar {
         beanstalkd_query put 0 0 10 "\r\n";
@@ -83,6 +86,3 @@ system("beanstalkd -d");
 --- request
     GET /foo
 --- response_body_like: ^RESERVED \d+ 2\r\n\r\n\r\n$
---- post
-system("killall beanstalkd");
-system("beanstalkd -d");

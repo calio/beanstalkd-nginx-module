@@ -22,6 +22,9 @@ run_tests();
 __DATA__
 
 === TEST 1:
+--- pre
+system("killall beanstalkd");
+system("beanstalkd -d");
 --- config
     location /foo {
         beanstalkd_query reserve-with-timeout 4;
@@ -31,13 +34,12 @@ __DATA__
     GET /foo
 --- response_body_like: ^TIMED_OUT\r\n$
 --- timeout: 10
---- post
-system("killall beanstalkd");
-system("beanstalkd -d");
-
 
 
 === TEST 2:
+--- pre
+system("killall beanstalkd");
+system("beanstalkd -d");
 --- config
     location /bar {
         beanstalkd_query put 0 0 10 "\r";
@@ -54,6 +56,3 @@ system("beanstalkd -d");
 --- request
     GET /foo
 --- response_body_like: ^RESERVED \d+ 1\r\n\r\r\n$
---- post
-system("killall beanstalkd");
-system("beanstalkd -d");
