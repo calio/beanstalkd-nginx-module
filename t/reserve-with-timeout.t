@@ -40,17 +40,16 @@ system("beanstalkd -d");
 === TEST 2:
 --- config
     location /bar {
-        #beanstalkd_query put 0 0 10 "\r";
-        #beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
+        beanstalkd_query put 0 0 10 "\r";
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 
     location /foo {
         access_by_lua '
             ngx.location.capture("/bar")
         ';
-        #beanstalkd_query reserve-with-timeout 10;
-        #beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
-        echo hello;
+        beanstalkd_query reserve-with-timeout 10;
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
     }
 --- request
     GET /foo
@@ -58,4 +57,3 @@ system("beanstalkd -d");
 --- post
 system("killall beanstalkd");
 system("beanstalkd -d");
---- ONLY
