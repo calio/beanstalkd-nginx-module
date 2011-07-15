@@ -81,6 +81,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
     dd("process simple response header");
 
+    u = r->upstream;
+
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
     if (ctx->state == NGX_ERROR) {
@@ -95,14 +97,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_put machine...");
 
                     
-#line 66 "src/ngx_http_beanstalkd_response.rl"
+#line 68 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 101 "src/ngx_http_beanstalkd_response.c"
+#line 103 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_put_start;
 	}
 
-#line 67 "src/ngx_http_beanstalkd_response.rl"
+#line 69 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -110,14 +112,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_delete machine...");
 
                     
-#line 74 "src/ngx_http_beanstalkd_response.rl"
+#line 76 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 116 "src/ngx_http_beanstalkd_response.c"
+#line 118 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_delete_start;
 	}
 
-#line 75 "src/ngx_http_beanstalkd_response.rl"
+#line 77 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -126,14 +128,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_reserve machine...");
 
                     
-#line 83 "src/ngx_http_beanstalkd_response.rl"
+#line 85 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 132 "src/ngx_http_beanstalkd_response.c"
+#line 134 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_reserve_start;
 	}
 
-#line 84 "src/ngx_http_beanstalkd_response.rl"
+#line 86 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -150,8 +152,6 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
     } else {
         cs = ctx->state;
     }
-
-    u = r->upstream;
 
     orig = u->buffer.pos;
 
