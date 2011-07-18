@@ -49,6 +49,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
     dd("process simple response header");
 
+    u = r->upstream;
+
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
     if (ctx->state == NGX_ERROR) {
@@ -97,8 +99,6 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
     } else {
         cs = ctx->state;
     }
-
-    u = r->upstream;
 
     orig = u->buffer.pos;
 
