@@ -1,6 +1,6 @@
 ﻿= Name =
 
-'''beanstalkd-nginx-module''' - An nginx module that talks to beanstalkd(a fast, general-purpose work queue). It supports put, reserve, delete, and many more beanstalkd commands.
+'''beanstalkd-nginx-module''' - An nginx module that talks to beanstalkd(a fast, general-purpose work queue). This module supports put, reserve, delete, and many more beanstalkd commands.
 
 ''This module is not distributed with the Nginx source.'' See [[#Installation|the installation instructions]].
 
@@ -52,7 +52,7 @@ The code base is borrowed directly from the standard [[NginxHttpMemcachedModule|
 
 Copyright (c) 2009, 2010, 2011, Taobao Inc., Alibaba Group ( http://www.taobao.com ).
 
-Copyright (c) 2011, Calio <vipcalio@gmail.com>.
+Copyright (c) 2010, 2011, Calio <vipcalio@gmail.com>.
 
 Copyright (c) 2009, 2010, 2011, Yichun "agentzh" Zhang (章亦春) <agentzh@gmail.com>.
 
