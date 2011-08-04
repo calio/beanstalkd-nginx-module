@@ -20,7 +20,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 2: simple put query
+=== TEST 1: simple put query
 --- config
     location /foo {
         set $job "hello";
@@ -33,7 +33,7 @@ __DATA__
 
 
 
-=== TEST 3: simple put query, autoredirect
+=== TEST 2: simple put query, autoredirect
 --- config
     location /foo/ {
         set $job "hello";
@@ -47,7 +47,7 @@ __DATA__
 
 
 
-=== TEST 4: simple put query, cmd in variable
+=== TEST 3: simple put query, cmd in variable
 --- config
     location /foo {
         set $job "hello";
@@ -61,7 +61,7 @@ __DATA__
 
 
 
-=== TEST 5: simple put query 3, command in string
+=== TEST 4: simple put query 3, command in string
 --- config
     location /foo {
         set $job "hello";
@@ -75,7 +75,7 @@ __DATA__
 
 
 
-=== TEST 6: simple put query 3, length of job is 0
+=== TEST 5: simple put query 3, length of job is 0
 --- config
     location /foo {
         set $cmd "put";

@@ -32,6 +32,7 @@ __DATA__
 "NOT_FOUND\r\n"
 
 
+
 === TEST 2:
 --- config
     location /bar {

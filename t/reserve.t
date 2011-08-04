@@ -24,6 +24,7 @@ __DATA__
 === TEST 1:
 --- pre
 system("killall beanstalkd");
+sleep(1);
 system("beanstalkd -d");
 --- config
     set $id "";
@@ -47,6 +48,7 @@ system("beanstalkd -d");
 === TEST 2:
 --- pre
 system("killall beanstalkd");
+sleep(1);
 system("beanstalkd -d");
 --- config
     location /bar {
@@ -69,6 +71,7 @@ system("beanstalkd -d");
 === TEST 3:
 --- pre
 system("killall beanstalkd");
+sleep(1);
 system("beanstalkd -d");
 --- config
     location /bar {
