@@ -41,7 +41,7 @@ cd nginx-$version/
 
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=$target \
-        --with-cc-opt="-O2" \
+        --with-cc-opt="-O2 -fprofile-arcs -ftest-coverage" \
         --with-ld-opt="-lgcov" \
           --with-http_addition_module \
             --without-mail_pop3_module \
