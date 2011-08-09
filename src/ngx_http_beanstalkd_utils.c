@@ -1,5 +1,5 @@
 
-#define DDEBUG 1
+#define DDEBUG 0
 #include "ddebug.h"
 #include "ngx_http_beanstalkd_utils.h"
 
