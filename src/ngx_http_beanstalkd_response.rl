@@ -53,6 +53,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
+    cs = ctx->state;
+
     if (ctx->state == NGX_ERROR) {
         dd("reinit state");
 
@@ -96,8 +98,6 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     return NGX_ERROR; /* this results in 500 status */
             }
         }
-    } else {
-        cs = ctx->state;
     }
 
     orig = u->buffer.pos;

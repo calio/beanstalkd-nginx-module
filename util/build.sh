@@ -41,8 +41,6 @@ cd nginx-$version/
 
 if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$root/util/build.sh" -nt Makefile ]]; then
     ./configure --prefix=$target \
-        --with-cc-opt="-O2 -fprofile-arcs -ftest-coverage" \
-        --with-ld-opt="-lgcov" \
           --with-http_addition_module \
             --without-mail_pop3_module \
             --without-mail_imap_module \
@@ -59,6 +57,8 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
           --with-debug \
           --add-module=$root/../echo-nginx-module \
           --add-module=$root/../lua-nginx-module
+#        --with-cc-opt="-O2 -fprofile-arcs -ftest-coverage" \
+#        --with-ld-opt="-lgcov" \
 #        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
             #--with-http_ssl_module \
 #          --add-module=$home/work/nginx/ngx_http_upstream_keepalive-2ce9d8a1ca93

@@ -17,7 +17,7 @@
     id = digit+;
     num = digit+;
     data_byte = any when test_len;
-    data = data_byte+;
+    data = data_byte*;
 
     error_helper = "OUT_OF_MEMORY\r\n"
                  | "INTERNAL_ERROR\r\n"

@@ -43,7 +43,7 @@ static const int beanstalkd_delete_en_main = 1;
 
 #line 45 "src/ngx_http_beanstalkd_response.c"
 static const int beanstalkd_reserve_start = 1;
-static const int beanstalkd_reserve_first_final = 91;
+static const int beanstalkd_reserve_first_final = 90;
 static const int beanstalkd_reserve_error = 0;
 
 static const int beanstalkd_reserve_en_main = 1;
@@ -85,6 +85,8 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_beanstalkd_module);
 
+    cs = ctx->state;
+
     if (ctx->state == NGX_ERROR) {
         dd("reinit state");
 
@@ -97,14 +99,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_put machine...");
 
                     
-#line 68 "src/ngx_http_beanstalkd_response.rl"
+#line 70 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 103 "src/ngx_http_beanstalkd_response.c"
+#line 105 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_put_start;
 	}
 
-#line 69 "src/ngx_http_beanstalkd_response.rl"
+#line 71 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -112,14 +114,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_delete machine...");
 
                     
-#line 76 "src/ngx_http_beanstalkd_response.rl"
+#line 78 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 118 "src/ngx_http_beanstalkd_response.c"
+#line 120 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_delete_start;
 	}
 
-#line 77 "src/ngx_http_beanstalkd_response.rl"
+#line 79 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -128,14 +130,14 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     dd("init beanstalkd_reserve machine...");
 
                     
-#line 85 "src/ngx_http_beanstalkd_response.rl"
+#line 87 "src/ngx_http_beanstalkd_response.rl"
                     
-#line 134 "src/ngx_http_beanstalkd_response.c"
+#line 136 "src/ngx_http_beanstalkd_response.c"
 	{
 	cs = beanstalkd_reserve_start;
 	}
 
-#line 86 "src/ngx_http_beanstalkd_response.rl"
+#line 88 "src/ngx_http_beanstalkd_response.rl"
 
                     break;
 
@@ -149,8 +151,6 @@ ngx_http_beanstalkd_process_simple_header(ngx_http_request_t *r)
                     return NGX_ERROR; /* this results in 500 status */
             }
         }
-    } else {
-        cs = ctx->state;
     }
 
     orig = u->buffer.pos;
@@ -1678,8 +1678,8 @@ case 1:
 		case 73: goto st27;
 		case 79: goto st40;
 		case 82: goto st52;
-		case 84: goto st69;
-		case 85: goto st77;
+		case 84: goto st68;
+		case 85: goto st76;
 	}
 	goto st0;
 st0:
@@ -1775,15 +1775,15 @@ tr18:
         dd("done it!");
         *done_addr = 1;
     }
-	goto st91;
+	goto st90;
 tr32:
 #line 31 "src/beanstalkd_common.rl"
 	{
         dd("done it!");
         *done_addr = 1;
     }
-	goto st91;
-tr72:
+	goto st90;
+tr71:
 #line 53 "src/beanstalkd_common.rl"
 	{
         dd("filter body");
@@ -1795,11 +1795,11 @@ tr72:
         dd("done it!");
         *done_addr = 1;
     }
-	goto st91;
-st91:
+	goto st90;
+st90:
 	if ( ++p == pe )
-		goto _test_eof91;
-case 91:
+		goto _test_eof90;
+case 90:
 #line 1804 "src/ngx_http_beanstalkd_response.c"
 	goto st0;
 st13:
@@ -2184,73 +2184,59 @@ st65:
 		goto _test_eof65;
 case 65:
 	_widec = (*p);
-	_widec = (short)(128 + ((*p) - -128));
-	if ( 
+	if ( (*p) < 13 ) {
+		if ( (*p) <= 12 ) {
+			_widec = (short)(128 + ((*p) - -128));
+			if ( 
 #line 11 "src/beanstalkd_common.rl"
 
         ctx->body_read++ < ctx->body_length
      ) _widec += 256;
-	if ( 384 <= _widec && _widec <= 639 )
-		goto st66;
+		}
+	} else if ( (*p) > 13 ) {
+		if ( 14 <= (*p) )
+ {			_widec = (short)(128 + ((*p) - -128));
+			if ( 
+#line 11 "src/beanstalkd_common.rl"
+
+        ctx->body_read++ < ctx->body_length
+     ) _widec += 256;
+		}
+	} else {
+		_widec = (short)(1152 + ((*p) - -128));
+		if ( 
+#line 11 "src/beanstalkd_common.rl"
+
+        ctx->body_read++ < ctx->body_length
+     ) _widec += 256;
+		if ( 
+#line 6 "src/beanstalkd_reserve.rl"
+
+        ctx->body_read == ctx->body_length + (ngx_int_t) (sizeof("\n") -1)
+     ) _widec += 512;
+	}
+	switch( _widec ) {
+		case 1549: goto st65;
+		case 1805: goto st66;
+		case 2061: goto st67;
+	}
+	if ( _widec > 524 ) {
+		if ( 526 <= _widec && _widec <= 639 )
+			goto st65;
+	} else if ( _widec >= 384 )
+		goto st65;
 	goto st0;
 st66:
 	if ( ++p == pe )
 		goto _test_eof66;
 case 66:
-	_widec = (*p);
-	if ( (*p) < 13 ) {
-		if ( (*p) <= 12 ) {
-			_widec = (short)(128 + ((*p) - -128));
-			if ( 
-#line 11 "src/beanstalkd_common.rl"
-
-        ctx->body_read++ < ctx->body_length
-     ) _widec += 256;
-		}
-	} else if ( (*p) > 13 ) {
-		if ( 14 <= (*p) )
- {			_widec = (short)(128 + ((*p) - -128));
-			if ( 
-#line 11 "src/beanstalkd_common.rl"
-
-        ctx->body_read++ < ctx->body_length
-     ) _widec += 256;
-		}
-	} else {
-		_widec = (short)(1152 + ((*p) - -128));
-		if ( 
-#line 11 "src/beanstalkd_common.rl"
-
-        ctx->body_read++ < ctx->body_length
-     ) _widec += 256;
-		if ( 
-#line 6 "src/beanstalkd_reserve.rl"
-
-        ctx->body_read == ctx->body_length + (ngx_int_t) (sizeof("\n") -1)
-     ) _widec += 512;
-	}
-	switch( _widec ) {
-		case 1549: goto st66;
-		case 1805: goto st67;
-		case 2061: goto st68;
-	}
-	if ( _widec > 524 ) {
-		if ( 526 <= _widec && _widec <= 639 )
-			goto st66;
-	} else if ( _widec >= 384 )
-		goto st66;
+	if ( (*p) == 10 )
+		goto tr71;
 	goto st0;
 st67:
 	if ( ++p == pe )
 		goto _test_eof67;
 case 67:
-	if ( (*p) == 10 )
-		goto tr72;
-	goto st0;
-st68:
-	if ( ++p == pe )
-		goto _test_eof68;
-case 68:
 	_widec = (*p);
 	if ( (*p) < 13 ) {
 		if ( (*p) <= 12 ) {
@@ -2284,19 +2270,19 @@ case 68:
      ) _widec += 512;
 	}
 	switch( _widec ) {
-		case 266: goto tr72;
-		case 522: goto tr73;
-		case 1549: goto st66;
-		case 1805: goto st67;
-		case 2061: goto st68;
+		case 266: goto tr71;
+		case 522: goto tr72;
+		case 1549: goto st65;
+		case 1805: goto st66;
+		case 2061: goto st67;
 	}
 	if ( _widec > 524 ) {
 		if ( 526 <= _widec && _widec <= 639 )
-			goto st66;
+			goto st65;
 	} else if ( _widec >= 384 )
-		goto st66;
+		goto st65;
 	goto st0;
-tr73:
+tr72:
 #line 53 "src/beanstalkd_common.rl"
 	{
         dd("filter body");
@@ -2308,12 +2294,12 @@ tr73:
         dd("done it!");
         *done_addr = 1;
     }
-	goto st92;
-st92:
+	goto st91;
+st91:
 	if ( ++p == pe )
-		goto _test_eof92;
-case 92:
-#line 2317 "src/ngx_http_beanstalkd_response.c"
+		goto _test_eof91;
+case 91:
+#line 2303 "src/ngx_http_beanstalkd_response.c"
 	_widec = (*p);
 	if ( (*p) < 13 ) {
 		if ( (*p) <= 12 ) {
@@ -2347,133 +2333,140 @@ case 92:
      ) _widec += 512;
 	}
 	switch( _widec ) {
-		case 1549: goto st66;
-		case 1805: goto st67;
-		case 2061: goto st68;
+		case 1549: goto st65;
+		case 1805: goto st66;
+		case 2061: goto st67;
 	}
 	if ( _widec > 524 ) {
 		if ( 526 <= _widec && _widec <= 639 )
-			goto st66;
+			goto st65;
 	} else if ( _widec >= 384 )
-		goto st66;
+		goto st65;
+	goto st0;
+st68:
+	if ( ++p == pe )
+		goto _test_eof68;
+case 68:
+	if ( (*p) == 73 )
+		goto st69;
 	goto st0;
 st69:
 	if ( ++p == pe )
 		goto _test_eof69;
 case 69:
-	if ( (*p) == 73 )
+	if ( (*p) == 77 )
 		goto st70;
 	goto st0;
 st70:
 	if ( ++p == pe )
 		goto _test_eof70;
 case 70:
-	if ( (*p) == 77 )
+	if ( (*p) == 69 )
 		goto st71;
 	goto st0;
 st71:
 	if ( ++p == pe )
 		goto _test_eof71;
 case 71:
-	if ( (*p) == 69 )
+	if ( (*p) == 68 )
 		goto st72;
 	goto st0;
 st72:
 	if ( ++p == pe )
 		goto _test_eof72;
 case 72:
-	if ( (*p) == 68 )
+	if ( (*p) == 95 )
 		goto st73;
 	goto st0;
 st73:
 	if ( ++p == pe )
 		goto _test_eof73;
 case 73:
-	if ( (*p) == 95 )
+	if ( (*p) == 79 )
 		goto st74;
 	goto st0;
 st74:
 	if ( ++p == pe )
 		goto _test_eof74;
 case 74:
-	if ( (*p) == 79 )
+	if ( (*p) == 85 )
 		goto st75;
 	goto st0;
 st75:
 	if ( ++p == pe )
 		goto _test_eof75;
 case 75:
-	if ( (*p) == 85 )
-		goto st76;
+	if ( (*p) == 84 )
+		goto st25;
 	goto st0;
 st76:
 	if ( ++p == pe )
 		goto _test_eof76;
 case 76:
-	if ( (*p) == 84 )
-		goto st25;
+	if ( (*p) == 78 )
+		goto st77;
 	goto st0;
 st77:
 	if ( ++p == pe )
 		goto _test_eof77;
 case 77:
-	if ( (*p) == 78 )
+	if ( (*p) == 75 )
 		goto st78;
 	goto st0;
 st78:
 	if ( ++p == pe )
 		goto _test_eof78;
 case 78:
-	if ( (*p) == 75 )
+	if ( (*p) == 78 )
 		goto st79;
 	goto st0;
 st79:
 	if ( ++p == pe )
 		goto _test_eof79;
 case 79:
-	if ( (*p) == 78 )
+	if ( (*p) == 79 )
 		goto st80;
 	goto st0;
 st80:
 	if ( ++p == pe )
 		goto _test_eof80;
 case 80:
-	if ( (*p) == 79 )
+	if ( (*p) == 87 )
 		goto st81;
 	goto st0;
 st81:
 	if ( ++p == pe )
 		goto _test_eof81;
 case 81:
-	if ( (*p) == 87 )
+	if ( (*p) == 78 )
 		goto st82;
 	goto st0;
 st82:
 	if ( ++p == pe )
 		goto _test_eof82;
 case 82:
-	if ( (*p) == 78 )
+	if ( (*p) == 95 )
 		goto st83;
 	goto st0;
 st83:
 	if ( ++p == pe )
 		goto _test_eof83;
 case 83:
-	if ( (*p) == 95 )
+	if ( (*p) == 67 )
 		goto st84;
 	goto st0;
 st84:
 	if ( ++p == pe )
 		goto _test_eof84;
 case 84:
-	if ( (*p) == 67 )
+	if ( (*p) == 79 )
 		goto st85;
 	goto st0;
 st85:
 	if ( ++p == pe )
 		goto _test_eof85;
 case 85:
-	if ( (*p) == 79 )
+	if ( (*p) == 77 )
 		goto st86;
 	goto st0;
 st86:
@@ -2487,27 +2480,20 @@ st87:
 	if ( ++p == pe )
 		goto _test_eof87;
 case 87:
-	if ( (*p) == 77 )
+	if ( (*p) == 65 )
 		goto st88;
 	goto st0;
 st88:
 	if ( ++p == pe )
 		goto _test_eof88;
 case 88:
-	if ( (*p) == 65 )
+	if ( (*p) == 78 )
 		goto st89;
 	goto st0;
 st89:
 	if ( ++p == pe )
 		goto _test_eof89;
 case 89:
-	if ( (*p) == 78 )
-		goto st90;
-	goto st0;
-st90:
-	if ( ++p == pe )
-		goto _test_eof90;
-case 90:
 	if ( (*p) == 68 )
 		goto st11;
 	goto st0;
@@ -2523,7 +2509,7 @@ case 90:
 	_test_eof10: cs = 10; goto _test_eof; 
 	_test_eof11: cs = 11; goto _test_eof; 
 	_test_eof12: cs = 12; goto _test_eof; 
-	_test_eof91: cs = 91; goto _test_eof; 
+	_test_eof90: cs = 90; goto _test_eof; 
 	_test_eof13: cs = 13; goto _test_eof; 
 	_test_eof14: cs = 14; goto _test_eof; 
 	_test_eof15: cs = 15; goto _test_eof; 
@@ -2579,8 +2565,8 @@ case 90:
 	_test_eof65: cs = 65; goto _test_eof; 
 	_test_eof66: cs = 66; goto _test_eof; 
 	_test_eof67: cs = 67; goto _test_eof; 
+	_test_eof91: cs = 91; goto _test_eof; 
 	_test_eof68: cs = 68; goto _test_eof; 
-	_test_eof92: cs = 92; goto _test_eof; 
 	_test_eof69: cs = 69; goto _test_eof; 
 	_test_eof70: cs = 70; goto _test_eof; 
 	_test_eof71: cs = 71; goto _test_eof; 
@@ -2602,7 +2588,6 @@ case 90:
 	_test_eof87: cs = 87; goto _test_eof; 
 	_test_eof88: cs = 88; goto _test_eof; 
 	_test_eof89: cs = 89; goto _test_eof; 
-	_test_eof90: cs = 90; goto _test_eof; 
 
 	_test_eof: {}
 	_out: {}
