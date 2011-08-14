@@ -20,7 +20,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1:
+=== TEST 1: id not exists
 --- config
     location /foo {
         beanstalkd_query delete -1;
@@ -33,7 +33,7 @@ __DATA__
 
 
 
-=== TEST 2:
+=== TEST 2: basic delete
 --- config
     location /bar {
         beanstalkd_query put 0 0 0 "hello";

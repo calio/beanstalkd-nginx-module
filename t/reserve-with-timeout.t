@@ -21,7 +21,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1:
+=== TEST 1: time out response
 --- pre
 system("killall beanstalkd");
 system("beanstalkd -d");
@@ -36,7 +36,7 @@ system("beanstalkd -d");
 --- timeout: 10
 
 
-=== TEST 2:
+=== TEST 2: reserved before timeout
 --- pre
 system("killall beanstalkd");
 system("beanstalkd -d");
