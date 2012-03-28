@@ -9,6 +9,22 @@ Name
 Version
     This module is still under development, will be released soon.
 
+Installation
+        Get the nginx source code from nginx.org ( http://nginx.org/ ).
+        Unpack the source code of nginx and this module, then build nginx with this module.
+
+        $ wget 'http://nginx.org/download/nginx-1.0.8.tar.gz'
+        $ tar -xzvf nginx-1.0.8.tar.gz
+        $ cd nginx-1.0.8/
+
+        $ git-clone http://github.com/calio/beanstalkd-nginx-module.git
+
+        $ ./configure --add-module=/somepath/beanstalkd-nginx-module
+        $ make -j2
+        $ make install (may need sudo)
+
+        And now you can find your nginx with beanstalkd-nginx-module in '/usr/local/nginx' if you don't change 'prefix' at configuration.
+
 Synopsis
         location /foo {
             set $job "hello";
@@ -35,7 +51,8 @@ Synopsis
       ...
 
 Description
-    This module supports almost the whole beanstalkd ascii protocol
+    This module supports "put", "reserve",  "reserve-with-timeout" and "delete"
+    commands of beanstalkd ascii protocol.
     (<https://github.com/kr/beanstalkd/blob/master/doc/protocol.txt >).
 
     It allows you to define a custom REST

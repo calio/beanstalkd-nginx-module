@@ -56,7 +56,11 @@ if [[ "$BUILD_CLEAN" -eq 1 || ! -f Makefile || "$root/config" -nt Makefile || "$
           --add-module=$root/../ndk-nginx-module \
           --with-debug \
           --add-module=$root/../echo-nginx-module \
-          --add-module=$root/../lua-nginx-module
+          --add-module=$root/../lua-nginx-module \
+          --add-module=$root/../memc-nginx-module \
+          --add-module=$root/../set-misc-nginx-module \
+          --add-module=$root/../xss-nginx-module \
+          --add-module=$root/../redis2-nginx-module
 #        --with-cc-opt="-O2 -fprofile-arcs -ftest-coverage" \
 #        --with-ld-opt="-lgcov" \
 #        --with-cc-opt="-fprofile-arcs -ftest-coverage" \
