@@ -86,3 +86,28 @@ __DATA__
     GET /foo
 --- response_body_like: ^INSERTED \d+\r\n$
 
+
+
+TEST 10: put request info
+--- ONLY
+--- config
+    location /foo {
+        beanstalkd_query put 1 0 10 $request_body;
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
+    }
+    location /bar {
+        beanstalkd_query reserve;
+        beanstalkd_pass 127.0.0.1:$TEST_NGINX_BEANSTALKD_PORT;
+    }
+    location /main {
+        access_by_lua '
+            ngx.location.capture("/foo")
+        ';
+        content_by_lua '
+            ngx.exec("/bar")
+        ';
+    }
+--- request
+    GET /main
+--- response_body
+aaa
