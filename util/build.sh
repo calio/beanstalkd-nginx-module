@@ -27,7 +27,7 @@ if [ ! -s "nginx-$version.tar.gz" ]; then
     if [ -f ~/work/nginx-$version.tar.gz ]; then
         cp ~/work/nginx-$version.tar.gz ./ || exit 1
     else
-        wget "http://sysoev.ru/nginx/nginx-$version.tar.gz" -O nginx-$version.tar.gz || exit 1
+        wget "http://nginx.org/download/nginx-$version.tar.gz" -O nginx-$version.tar.gz || exit 1
     fi
 
     tar -xzvf nginx-$version.tar.gz || exit 1
