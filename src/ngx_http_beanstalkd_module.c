@@ -50,9 +50,6 @@ ngx_uint_t ngx_http_beanstalkd_cmd_num_args[] = {
 };
 
 
-static ngx_flag_t ngx_http_beanstalkd_enabled = 0;
-
-
 static ngx_command_t  ngx_http_beanstalkd_commands[] = {
     { ngx_string("beanstalkd_pass"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -209,8 +206,6 @@ ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     clcf->handler = ngx_http_beanstalkd_handler;
-
-    ngx_http_beanstalkd_enabled = 1;
 
     value = cf->args->elts;
 
