@@ -199,7 +199,7 @@ ngx_http_beanstalkd_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_http_compile_complex_value_t    ccv;
 
-    if (blcf->upstream.upstream) {
+    if (blcf->upstream.upstream || blcf->complex_target) {
         return "is duplicate";
     }
 
