@@ -88,8 +88,7 @@ __DATA__
 
 
 
-TEST 10: put request info
---- ONLY
+=== TEST 10: put request info
 --- config
     location /foo {
         beanstalkd_query put 1 0 10 $request_body;
@@ -109,5 +108,4 @@ TEST 10: put request info
     }
 --- request
     GET /main
---- response_body
-aaa
+--- response_body_like : ^RESERVED \d+ 0\r\n\r\n$
